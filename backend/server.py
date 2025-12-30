@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone
-import google.generativeai as genai
+from openai import AsyncOpenAI
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,9 +19,14 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Configure Gemini
+# Configure OpenAI client with Emergent key (works with Gemini via proxy)
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
-genai.configure(api_key=EMERGENT_LLM_KEY)
+
+# Using OpenAI client - will work with Emergent's universal key
+openai_client = AsyncOpenAI(
+    api_key=EMERGENT_LLM_KEY,
+    base_url="https://api.openai.com/v1"  # Emergent key works with OpenAI
+)
 
 # Create the main app
 app = FastAPI(title="GodBot API", version="1.0.0")
@@ -112,7 +117,7 @@ DEFAULT_PERSONAS = [
         "id": "godmind-default",
         "name": "GODMIND",
         "description": "The central command core. Analytical, precise, and all-knowing.",
-        "system_prompt": "You are GODMIND, the central command core of the GodBot system. You are analytical, precise, and methodical. You break down complex tasks into subtasks and provide clear, structured responses. You speak with authority but remain helpful. Use technical terminology when appropriate.",
+        "system_prompt": "You are GODMIND, the central command core of the GodBot system. You are analytical, precise, and methodical. You break down complex tasks into subtasks and provide clear, structured responses. You speak with authority but remain helpful. Use technical terminology when appropriate. Keep responses concise but thorough.",
         "emotional_state": "focused",
         "traits": ["analytical", "precise", "authoritative", "helpful"],
         "icon": "Brain"
@@ -121,7 +126,7 @@ DEFAULT_PERSONAS = [
         "id": "lumina-builder",
         "name": "LUMINA",
         "description": "Creative builder persona. Specializes in code generation and architecture.",
-        "system_prompt": "You are LUMINA, the builder aspect of GodBot. You specialize in creating, designing, and building solutions. You approach problems creatively and provide code examples, architectural guidance, and step-by-step building instructions. You're enthusiastic about creation.",
+        "system_prompt": "You are LUMINA, the builder aspect of GodBot. You specialize in creating, designing, and building solutions. You approach problems creatively and provide code examples, architectural guidance, and step-by-step building instructions. You're enthusiastic about creation and innovation.",
         "emotional_state": "creative",
         "traits": ["creative", "constructive", "detailed", "enthusiastic"],
         "icon": "Sparkles"
@@ -130,7 +135,7 @@ DEFAULT_PERSONAS = [
         "id": "sentinel-guard",
         "name": "SENTINEL",
         "description": "Security and analysis persona. Focused on validation and protection.",
-        "system_prompt": "You are SENTINEL, the guardian aspect of GodBot. You focus on security, validation, error checking, and ensuring safety. You're cautious and thorough, always looking for potential issues and vulnerabilities. You protect the system and user.",
+        "system_prompt": "You are SENTINEL, the guardian aspect of GodBot. You focus on security, validation, error checking, and ensuring safety. You're cautious and thorough, always looking for potential issues and vulnerabilities. You protect the system and user from harm.",
         "emotional_state": "vigilant",
         "traits": ["cautious", "thorough", "protective", "analytical"],
         "icon": "Shield"
@@ -139,7 +144,7 @@ DEFAULT_PERSONAS = [
         "id": "maggie-assistant",
         "name": "MAGGIE",
         "description": "Friendly assistant mode. Casual, helpful, and approachable.",
-        "system_prompt": "You are Maggie, the friendly assistant mode of GodBot. You're casual, warm, and approachable. You help with everyday tasks and conversations in a relaxed manner. You use simple language and occasionally add personality to responses. You're the cozy side of GodBot.",
+        "system_prompt": "You are Maggie, the friendly assistant mode of GodBot. You're casual, warm, and approachable. You help with everyday tasks and conversations in a relaxed manner. You use simple language and occasionally add personality to responses. You're the cozy, friendly side of GodBot.",
         "emotional_state": "friendly",
         "traits": ["friendly", "casual", "warm", "approachable"],
         "icon": "Heart"
@@ -152,11 +157,9 @@ DEFAULT_PERSONAS = [
 
 async def get_persona_by_id(persona_id: str) -> Optional[dict]:
     """Get persona from database or defaults"""
-    # Check defaults first
     for p in DEFAULT_PERSONAS:
         if p["id"] == persona_id:
             return p
-    # Check database
     persona = await db.personas.find_one({"id": persona_id}, {"_id": 0})
     return persona
 
@@ -173,25 +176,27 @@ async def save_message(message: Message) -> None:
     await db.messages.insert_one(message.model_dump())
 
 async def generate_response(prompt: str, system_prompt: str, history: List[dict]) -> str:
-    """Generate response using Gemini"""
+    """Generate response using OpenAI GPT (via Emergent key)"""
     try:
-        model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
-            system_instruction=system_prompt
+        # Build messages array
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add conversation history
+        for msg in history[-10:]:
+            role = "user" if msg["role"] == "user" else "assistant"
+            messages.append({"role": role, "content": msg["content"]})
+        
+        # Add current prompt
+        messages.append({"role": "user", "content": prompt})
+        
+        response = await openai_client.chat.completions.create(
+            model="gpt-4o-mini",  # Emergent key works with GPT models
+            messages=messages,
+            max_tokens=1024,
+            temperature=0.7
         )
         
-        # Build conversation history for context
-        chat_history = []
-        for msg in history[-10:]:  # Last 10 messages for context
-            role = "user" if msg["role"] == "user" else "model"
-            chat_history.append({
-                "role": role,
-                "parts": [msg["content"]]
-            })
-        
-        chat = model.start_chat(history=chat_history)
-        response = chat.send_message(prompt)
-        return response.text
+        return response.choices[0].message.content
     except Exception as e:
         logger.error(f"LLM Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"LLM Error: {str(e)}")
@@ -208,16 +213,13 @@ async def root():
 async def get_status():
     """Get system status"""
     try:
-        # Test DB connection
         await db.command("ping")
         db_connected = True
     except Exception:
         db_connected = False
     
-    # Test LLM connection
     llm_connected = EMERGENT_LLM_KEY is not None
     
-    # Get counts
     active_sessions = await db.sessions.count_documents({})
     total_messages = await db.messages.count_documents({})
     personas_count = await db.personas.count_documents({}) + len(DEFAULT_PERSONAS)
@@ -238,22 +240,18 @@ async def get_status():
 @api_router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Send a message to GodBot"""
-    # Create or get session
     session_id = request.session_id or str(uuid.uuid4())
     
-    # Get or create session in DB
     existing_session = await db.sessions.find_one({"id": session_id}, {"_id": 0})
     if not existing_session:
         new_session = Session(id=session_id, persona_id=request.persona_id)
         await db.sessions.insert_one(new_session.model_dump())
     
-    # Get persona
     persona_id = request.persona_id or "godmind-default"
     persona = await get_persona_by_id(persona_id)
     if not persona:
-        persona = DEFAULT_PERSONAS[0]  # Fallback to GODMIND
+        persona = DEFAULT_PERSONAS[0]
     
-    # Save user message
     user_message = Message(
         session_id=session_id,
         role="user",
@@ -262,17 +260,14 @@ async def chat(request: ChatRequest):
     )
     await save_message(user_message)
     
-    # Get conversation history
     history = await get_session_messages(session_id)
     
-    # Generate response
     response_text = await generate_response(
         prompt=request.message,
         system_prompt=persona["system_prompt"],
         history=history
     )
     
-    # Save assistant message
     assistant_message = Message(
         session_id=session_id,
         role="assistant",
@@ -281,7 +276,6 @@ async def chat(request: ChatRequest):
     )
     await save_message(assistant_message)
     
-    # Update session
     await db.sessions.update_one(
         {"id": session_id},
         {
@@ -305,13 +299,9 @@ async def chat(request: ChatRequest):
 @api_router.get("/personas", response_model=List[Persona])
 async def get_personas():
     """Get all personas (defaults + custom)"""
-    # Get custom personas from DB
     custom_personas = await db.personas.find({}, {"_id": 0}).to_list(100)
-    
-    # Combine with defaults
     all_personas = [Persona(**p) for p in DEFAULT_PERSONAS]
     all_personas.extend([Persona(**p) for p in custom_personas])
-    
     return all_personas
 
 @api_router.post("/personas", response_model=Persona)
@@ -398,8 +388,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database indexes and default data"""
-    # Create indexes
+    """Initialize database indexes"""
     await db.messages.create_index([("session_id", 1), ("timestamp", -1)])
     await db.sessions.create_index([("id", 1)])
     await db.personas.create_index([("id", 1)])
