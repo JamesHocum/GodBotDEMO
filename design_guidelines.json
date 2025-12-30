@@ -1,0 +1,129 @@
+{
+  "design_system": {
+    "name": "GodBot_Neon_OS",
+    "theme": "dark",
+    "aesthetic": "Cyberpunk / Synthwave / Terminal",
+    "typography": {
+      "font_family": {
+        "heading": "Unbounded, display",
+        "body": "JetBrains Mono, monospace",
+        "code": "JetBrains Mono, monospace"
+      },
+      "imports": [
+        "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@300;400;700;900&display=swap"
+      ],
+      "scale": {
+        "h1": "text-4xl md:text-6xl font-black tracking-tighter uppercase",
+        "h2": "text-3xl md:text-4xl font-bold tracking-tight",
+        "h3": "text-xl md:text-2xl font-bold tracking-wide text-primary",
+        "body": "text-sm md:text-base font-normal leading-relaxed",
+        "code": "text-xs md:text-sm font-medium text-green-400"
+      }
+    },
+    "colors": {
+      "palette": {
+        "background": "#030014",
+        "foreground": "#e2e8f0",
+        "card": "#0a0a0f",
+        "card_foreground": "#ffffff",
+        "popover": "#0a0a0f",
+        "popover_foreground": "#ffffff",
+        "primary": "#d946ef",
+        "primary_foreground": "#ffffff",
+        "secondary": "#06b6d4",
+        "secondary_foreground": "#000000",
+        "muted": "#1e1b4b",
+        "muted_foreground": "#94a3b8",
+        "accent": "#22c55e",
+        "accent_foreground": "#000000",
+        "destructive": "#ff0055",
+        "destructive_foreground": "#ffffff",
+        "border": "#2e1065",
+        "input": "#1e1b4b",
+        "ring": "#d946ef"
+      },
+      "gradients": {
+        "hero": "bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-600",
+        "surface": "bg-gradient-to-b from-white/5 to-transparent",
+        "glow": "bg-gradient-to-r from-primary/20 to-secondary/20"
+      }
+    },
+    "visual_enhancers": {
+      "glassmorphism": "backdrop-blur-xl bg-black/60 border border-white/10 shadow-2xl",
+      "neon_glow": "shadow-[0_0_20px_rgba(217,70,239,0.3)] hover:shadow-[0_0_30px_rgba(217,70,239,0.6)] transition-shadow duration-300",
+      "terminal_border": "border border-green-500/30 bg-black/80",
+      "scanlines": "bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"
+    },
+    "layout": {
+      "grid_system": "grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 p-4 md:p-6",
+      "container": "max-w-7xl mx-auto w-full",
+      "spacing": {
+        "section": "py-12 md:py-24",
+        "component": "p-6 md:p-8"
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": "rounded-none border border-primary bg-primary/10 text-primary hover:bg-primary hover:text-black transition-all duration-300 font-bold uppercase tracking-widest text-xs shadow-[0_0_10px_rgba(217,70,239,0.2)]",
+        "secondary": "rounded-none border border-secondary/50 text-secondary hover:bg-secondary/10 transition-all duration-300 font-bold uppercase tracking-widest text-xs",
+        "ghost": "rounded-none hover:bg-white/5 text-muted-foreground hover:text-white transition-colors"
+      },
+      "cards": {
+        "default": "rounded-none border border-white/10 bg-black/40 backdrop-blur-md p-6 relative overflow-hidden group",
+        "interactive": "rounded-none border border-white/10 bg-black/40 backdrop-blur-md p-6 hover:border-primary/50 transition-colors duration-300 cursor-pointer"
+      },
+      "inputs": {
+        "default": "rounded-none bg-black/50 border-b-2 border-white/20 focus:border-primary focus:ring-0 px-4 py-3 text-white placeholder:text-white/30 font-mono transition-colors"
+      }
+    },
+    "motion": {
+      "transitions": "transition-all duration-300 ease-out",
+      "animations": {
+        "fade_in": "animate-in fade-in duration-500",
+        "slide_up": "animate-in slide-in-from-bottom-4 duration-500",
+        "pulse_slow": "animate-pulse duration-[3000ms]"
+      }
+    }
+  },
+  "assets": {
+    "images": {
+      "background_texture": {
+        "url": "https://images.unsplash.com/photo-1762278804964-9c63a61208a5?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Abstract neon streaks background",
+        "usage": "Global background overlay with low opacity"
+      },
+      "hero_visual": {
+        "url": "https://images.unsplash.com/photo-1575388902449-6bca946ad549?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Futuristic data interface",
+        "usage": "Hero section or dashboard placeholder"
+      },
+      "cyberpunk_city": {
+        "url": "https://images.unsplash.com/photo-1688377051459-aebb99b42bff?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Neon city sign",
+        "usage": "Atmospheric accent for cards or login page"
+      }
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "Stroke width 1.5px, sharp edges preferred where possible"
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. SETUP: Update `tailwind.config.js` with the colors and font families defined in `design_system.typography` and `design_system.colors`.",
+    "2. FONTS: Add the Google Fonts import link to `index.css` at the very top.",
+    "3. GLOBAL STYLES: Apply the `background` color and `background_texture` (with opacity 0.1) to the `body` in `index.css`.",
+    "4. COMPONENTS: When using Shadcn components, override the default `rounded-md` with `rounded-none` or `rounded-sm` to match the brutalist/cyberpunk aesthetic.",
+    "5. TERMINAL FEEL: Ensure all text inputs feel like a terminal command line (monospaced, blinking cursor if possible).",
+    "6. LAYOUT: Use the 'Bento' grid strategy for the dashboard. Mix 2x2, 1x2, and 2x1 blocks.",
+    "7. DATA-TESTID: Add `data-testid` to all interactive elements (buttons, inputs, cards).",
+    "8. NO GRADIENT TEXT: Avoid gradient text for accessibility; use gradients for borders or backgrounds instead.",
+    "9. TOASTS: Use `sonner` for notifications, styled with a dark background and neon borders."
+  ],
+  "universal_guidelines": [
+    "Do not use generic centered layouts.",
+    "Create depth through z-index and glassmorphism.",
+    "Use 2-3x more spacing than typical designs.",
+    "Every interaction needs a micro-animation.",
+    "Never use AI assistant emojis."
+  ]
+}
