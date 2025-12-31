@@ -74,17 +74,45 @@ class GodBotAPITester:
             print(f"   Active Models: {len(data.get('active_models', []))}")
         return success
 
-    def test_trinity_status(self):
-        """Test Trinity Fusion status endpoint"""
-        success, data = self.run_test("Trinity Status", "GET", "trinity", 200)
+    def test_pledge_endpoint(self):
+        """Test GodBot pledge endpoint"""
+        success, data = self.run_test("GodBot Pledge", "GET", "pledge", 200)
         if success:
-            required_fields = ['command_r', 'deepseek', 'mythomax', 'fusion_ready', 'current_tier']
+            required_fields = ['pledge', 'version', 'codename', 'principles']
             for field in required_fields:
                 if field not in data:
                     print(f"❌ Missing required field: {field}")
                     return False
-            print(f"   Fusion Ready: {data.get('fusion_ready')}")
-            print(f"   Current Tier: {data.get('current_tier')}")
+            print(f"   Codename: {data.get('codename')}")
+            print(f"   Version: {data.get('version')}")
+        return success
+
+    def test_dashboard_endpoint(self):
+        """Test dashboard metrics endpoint"""
+        success, data = self.run_test("Dashboard Metrics", "GET", "dashboard", 200)
+        if success:
+            required_fields = ['usage', 'tier_info', 'model_breakdown', 'cost_comparison']
+            for field in required_fields:
+                if field not in data:
+                    print(f"❌ Missing required field: {field}")
+                    return False
+            print(f"   Tier: {data.get('tier_info', {}).get('name')}")
+            print(f"   Credits Remaining: {data.get('usage', {}).get('credits_remaining')}")
+            print(f"   Models: {len(data.get('model_breakdown', []))}")
+        return success
+
+    def test_dreamchain_endpoint(self):
+        """Test DreamChain insights endpoint"""
+        success, data = self.run_test("DreamChain Insights", "GET", "dreamchain", 200)
+        if success:
+            required_fields = ['mode', 'status', 'insights']
+            for field in required_fields:
+                if field not in data:
+                    print(f"❌ Missing required field: {field}")
+                    return False
+            print(f"   Mode: {data.get('mode')}")
+            print(f"   Status: {data.get('status')}")
+            print(f"   Insights: {len(data.get('insights', []))}")
         return success
 
     def test_personas_endpoint(self):
