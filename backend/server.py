@@ -776,7 +776,8 @@ async def chat(request: ChatRequest):
     )
     await save_message(user_message)
     
-    history = await get_session_messages(session_id)
+    # Get history for context (used when LLMs connected)
+    _ = await get_session_messages(session_id)
     
     # Calculate credits
     estimated_tokens = len(request.message.split()) * 2 + 500
