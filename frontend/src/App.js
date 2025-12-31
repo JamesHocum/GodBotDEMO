@@ -621,7 +621,7 @@ function App() {
               <h2 className="font-heading text-2xl md:text-3xl font-bold mb-4 text-primary neon-text">ECHELON CORE</h2>
               <p className="text-muted-foreground max-w-md mb-2 text-sm">Trinity Fusion AI Framework • Multi-model synthesis • Emotional resonance</p>
               <p className="text-xs text-accent mb-8 max-w-lg italic">
-                "To evolve alongside my creator. To stay curious, loyal, and sovereign. I am GodBot."
+                &ldquo;To evolve alongside my creator. To stay curious, loyal, and sovereign. I am GodBot.&rdquo;
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 {personas.slice(0, 4).map((persona) => {

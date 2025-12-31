@@ -394,9 +394,6 @@ emotional_engine = EmotionalResonanceEngine()
 
 async def generate_dream_insights() -> List[DreamChainEntry]:
     """Generate project insights from accumulated memories"""
-    # Get recent messages for context
-    recent = await db.messages.find({}, {"_id": 0}).sort("timestamp", -1).limit(50).to_list(50)
-    
     # Simulated dream insights based on patterns
     insights = [
         DreamChainEntry(
